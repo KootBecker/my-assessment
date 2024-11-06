@@ -23,7 +23,17 @@ def question_1():
     Return the `Name`, `Surname` and `CustomerID`
     """
 
-    qry = """____________________"""
+    qry =   """
+                -- Find the name, surname and customer ids
+                SELECT DISTINCT Name, Surname, CustomerID
+                -- Select the columns from the customers table
+                FROM customers
+                -- Filter the results to only include duplicated customer ids
+                WHERE CustomerID IN
+                    (SELECT CustomerID FROM customers GROUP BY CustomerID HAVING COUNT(CustomerID) > 1)
+                -- Order the results by CustomerID in ascending order
+                ORDER BY CustomerID ASC
+            """
 
     return qry
 
@@ -33,7 +43,16 @@ def question_2():
     Return the `Name`, `Surname` and `Income` of all female customers in the dataset in descending order of income
     """
 
-    qry = """____________________"""
+    qry =   """
+                -- Select the name, surname and income
+                SELECT Name, Surname, Income
+                -- Select the columns from the customers table
+                FROM customers
+                -- Filter the results to only include females
+                WHERE Gender = 'Female'
+                -- Order the results by income in descending order
+                ORDER BY Income DESC
+            """
 
     return qry
 
@@ -45,7 +64,18 @@ def question_3():
     There is only 1 loan per customer ID.
     """
 
-    qry = """____________________"""
+    qry =   """
+                -- Calculate the percentage of approved loans by LoanTerm
+                SELECT LoanTerm,
+                    ROUND((COUNT(ApprovalStatus) * 100.0) / (SELECT COUNT(ApprovalStatus) FROM loans), 2)
+                    AS PercentageApproved
+                -- Select the columns from the loans table
+                FROM loans
+                -- Filter the results to only include approved loans
+                WHERE ApprovalStatus = 'Approved'
+                -- Group the results by LoanTerm
+                GROUP BY LoanTerm
+            """
 
     return qry
 
@@ -56,7 +86,15 @@ def question_4():
     Return columns `CustomerClass` and `Count`
     """
 
-    qry = """____________________"""
+    qry =   """
+                -- Return a breakdown of the number of customers per CustomerClass
+                SELECT CustomerClass,
+                    (COUNT(CustomerClass)) AS Count
+                -- Select the columns from the credit table
+                FROM credit
+                -- Group the results by CustomerClass
+                GROUP BY CustomerClass
+            """
 
     return qry
 
@@ -66,6 +104,11 @@ def question_5():
     Make use of the UPDATE function to amend/fix the following: Customers with a CreditScore between and including 600 to 650 must be classified as CustomerClass C.
     """
 
-    qry = """____________________"""
+    qry =   """
+                -- Update the CustomerClass for customers in the credit table with a CreditScore between 600 and 650
+                UPDATE credit
+                SET CustomerClass = 'C'
+                WHERE CreditScore BETWEEN 600 AND 650
+            """
 
     return qry

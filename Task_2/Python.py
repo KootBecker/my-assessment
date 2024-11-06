@@ -102,7 +102,15 @@ def question_1(df_balances):
         float: The percentage of type 1 defaulted loans (ie 50.0 not 0.5)
 
     """
+    # Type 1 default occurs when any scheduled monthly repayment is not met in full
+    default_rate_percent = 0
+    # For each loan, if the actual repayment is less than the scheduled repayment, increment the default rate
+    for index, row in df_balances.iterrows():
+        if row["ActualRepayment"] < row["ScheduledRepayment"]:
+            default_rate_percent += 1
 
+    # Calculate the default rate percentage
+    default_rate_percent = (default_rate_percent / len(df_balances)) * 100
     return default_rate_percent
 
 
@@ -118,9 +126,21 @@ def question_2(df_scheduled, df_balances):
         float: The percentage of type 2 defaulted loans (ie 50.0 not 0.5)
 
     """
+    # Type 2 default occurs when more than 15% of the expected total payments are unpaid for the year
+    total_defaulted_loans = 0
+    # Calculate the total number of loans
+    total_loans = df_scheduled["LoanID"].nunique()
 
+    # For each loan, if the actual repayment is less than 85% of the scheduled repayment, increment the default rate
+    for loan_id in df_scheduled["LoanID"].unique():
+        scheduled_total = (df_balances[df_balances["LoanID"] == loan_id]["ScheduledRepayment"]).sum()
+        actual_total = (df_balances[df_balances["LoanID"] == loan_id]["ActualRepayment"]).sum()
+        if (scheduled_total - actual_total) > (0.15 * scheduled_total):
+            total_defaulted_loans += 1
+
+    # Calculate the default rate percentage
+    default_rate_percent = (total_defaulted_loans / total_loans) * 100
     return default_rate_percent
-
 
 def question_3(df_balances):
     """
@@ -136,6 +156,14 @@ def question_3(df_balances):
         float: The anualized CPR of the loan portfolio as a percent.
 
     """
+    # Calculate the SMM for each loan
+    smm = []
+    for index, row in df_balances.iterrows():
+        smm.append((row["LoanBalanceStart"] - row["LoanBalanceEnd"]) / row["LoanBalanceStart"])
+    # Calculate the SMM mean
+    smm_mean = np.mean(smm)
+    # Calculate the CPR percentage
+    cpr_percent = (1 - (1 - smm_mean) ** 12) * 100
 
     return cpr_percent
 
@@ -155,5 +183,19 @@ def question_4(df_balances):
         float: The predicted total loss for the second year in the loan term.
 
     """
+    # Calculate the default rate percentage using the more useful metric
+    default_rate_percent = question_2(df_scheduled, df_balances)
+    recovery_rate = 0.8
+    total_loss = 0
+
+    # For each loan, if the actual repayment is less than 85% of the scheduled repayment, increment the default rate
+    for loan_id in df_scheduled["LoanID"].unique():
+        scheduled_total = (df_balances[df_balances["LoanID"] == loan_id]["ScheduledRepayment"]).sum()
+        actual_total = (df_balances[df_balances["LoanID"] == loan_id]["ActualRepayment"]).sum()
+        if (scheduled_total - actual_total) > (0.15 * scheduled_total):
+            total_loss += scheduled_total * (1 - recovery_rate)
+    
+    # Calculate the total loss
+    total_loss = total_loss * (default_rate_percent / 100)
 
     return total_loss
